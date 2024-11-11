@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define MAX_VERTICES 10 // Максимальное количество вершин в графе
-#define MAX_EDGES 45    // Максимальное количество рёбер для графа с 10 вершинами (n*(n-1)/2 для неориентированного графа)
+#define MAX_VERTICES 10 
+#define MAX_EDGES 45    
 
 void generateAdjacencyMatrix(int n, int graph[MAX_VERTICES][MAX_VERTICES]) {
     // Генерация матрицы смежности
