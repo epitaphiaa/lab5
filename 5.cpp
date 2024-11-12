@@ -2,25 +2,20 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define MAX_VERTICES 10 
-#define MAX_EDGES 45    
-
-void generateAdjacencyMatrix(int n, int graph[MAX_VERTICES][MAX_VERTICES]) {
-    // Генерация матрицы смежности
+void generateAdjacencyMatrix(int n, int **graph) {
     for (int i = 0; i < n; i++) {
         for (int j = i; j < n; j++) {
             if (i == j) {
-                graph[i][j] = 0; // Нет петли
+                graph[i][j] = 0;
             } else {
-                graph[i][j] = rand() % 2; // Случайное ребро
-                graph[j][i] = graph[i][j]; // Граф неориентированный
+                graph[i][j] = rand() % 2;
+                graph[j][i] = graph[i][j];
             }
         }
     }
 }
 
-void printAdjacencyMatrix(int n, int graph[MAX_VERTICES][MAX_VERTICES]) {
-    // Вывод матрицы смежности
+void printAdjacencyMatrix(int n, int **graph) {
     printf("Матрица смежности:\n");
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -30,20 +25,7 @@ void printAdjacencyMatrix(int n, int graph[MAX_VERTICES][MAX_VERTICES]) {
     }
 }
 
-int graphSize(int n, int graph[MAX_VERTICES][MAX_VERTICES]) {
-    // Определение размера графа (количество рёбер)
-    int edges = 0;
-    for (int i = 0; i < n; i++) {
-        for (int j = i + 1; j < n; j++) {
-            if (graph[i][j] == 1) {
-                edges++;
-            }
-        }
-    }
-    return edges;
-}
-
-void findSpecialVertices(int n, int graph[MAX_VERTICES][MAX_VERTICES]) {
+void findSpecialVerticesByAdjacencyMatrix(int n, int **graph) {
     int degree;
     int isolated = 0, pendant = 0, dominating = 0;
 
@@ -54,22 +36,21 @@ void findSpecialVertices(int n, int graph[MAX_VERTICES][MAX_VERTICES]) {
         }
 
         if (degree == 0) {
-            printf("Вершина %d: изолированная\n", i + 1);
+            printf("Вершина %d: изолированная (по матрице смежности)\n", i + 1);
             isolated++;
         } else if (degree == 1) {
-            printf("Вершина %d: концевая\n", i + 1);
+            printf("Вершина %d: концевая (по матрице смежности)\n", i + 1);
             pendant++;
         } else if (degree == n - 1) {
-            printf("Вершина %d: доминирующая\n", i + 1);
+            printf("Вершина %d: доминирующая (по матрице смежности)\n", i + 1);
             dominating++;
         }
     }
 
-    printf("\nВсего: изолированных вершин = %d, конечных = %d, доминирующих = %d\n", isolated, pendant, dominating);
+    printf("\nПо матрице смежности: изолированных вершин = %d, конечных = %d, доминирующих = %d\n", isolated, pendant, dominating);
 }
 
-void generateIncidenceMatrix(int n, int graph[MAX_VERTICES][MAX_VERTICES], int incidence[MAX_VERTICES][MAX_EDGES], int *edgeCount) {
-    // Построение матрицы инцидентности
+void generateIncidenceMatrix(int n, int **graph, int **incidence, int *edgeCount) {
     int edgeIndex = 0;
     for (int i = 0; i < n; i++) {
         for (int j = i + 1; j < n; j++) {
@@ -83,8 +64,7 @@ void generateIncidenceMatrix(int n, int graph[MAX_VERTICES][MAX_VERTICES], int i
     *edgeCount = edgeIndex;
 }
 
-void printIncidenceMatrix(int n, int edgeCount, int incidence[MAX_VERTICES][MAX_EDGES]) {
-    // Вывод матрицы инцидентности
+void printIncidenceMatrix(int n, int edgeCount, int **incidence) {
     printf("Матрица инцидентности:\n");
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < edgeCount; j++) {
@@ -94,6 +74,30 @@ void printIncidenceMatrix(int n, int edgeCount, int incidence[MAX_VERTICES][MAX_
     }
 }
 
+void findSpecialVerticesByIncidenceMatrix(int n, int edgeCount, int **incidence) {
+    int isolated = 0, pendant = 0, dominating = 0;
+
+    for (int i = 0; i < n; i++) {
+        int degree = 0;
+        for (int j = 0; j < edgeCount; j++) {
+            degree += incidence[i][j];
+        }
+
+        if (degree == 0) {
+            printf("Вершина %d: изолированная (по матрице инцидентности)\n", i + 1);
+            isolated++;
+        } else if (degree == 1) {
+            printf("Вершина %d: концевая (по матрице инцидентности)\n", i + 1);
+            pendant++;
+        } else if (degree == n - 1) {
+            printf("Вершина %d: доминирующая (по матрице инцидентности)\n", i + 1);
+            dominating++;
+        }
+    }
+
+    printf("\nПо матрице инцидентности: изолированных вершин = %d, конечных = %d, доминирующих = %d\n", isolated, pendant, dominating);
+}
+
 int main() {
     srand(time(0));
 
@@ -101,31 +105,39 @@ int main() {
     printf("Введите количество вершин графа: ");
     scanf("%d", &n);
 
-    if (n > MAX_VERTICES) {
-        printf("Количество вершин не может превышать %d\n", MAX_VERTICES);
+    if (n > 10) {
+        printf("Количество вершин не может превышать 10\n");
         return 1;
     }
 
-    int graph[MAX_VERTICES][MAX_VERTICES];
-    int incidence[MAX_VERTICES][MAX_EDGES] = {0}; // Инициализация матрицы инцидентности нулями
+    int **graph = (int **)malloc(n * sizeof(int *));
+    for (int i = 0; i < n; i++) {
+        graph[i] = (int *)malloc(n * sizeof(int));
+    }
+
+    int **incidence = (int **)malloc(n * sizeof(int *));
+    for (int i = 0; i < n; i++) {
+        incidence[i] = (int *)calloc(n * (n - 1) / 2, sizeof(int));
+    }
+
     int edgeCount;
 
-    // Генерация матрицы смежности
     generateAdjacencyMatrix(n, graph);
-
-    // Вывод матрицы смежности
     printAdjacencyMatrix(n, graph);
 
-    // Определение размера графа
-    int edges = graphSize(n, graph);
-    printf("Размер графа (количество рёбер): %d\n", edges);
-
-    // Нахождение изолированных, конечных и доминирующих вершин
-    findSpecialVertices(n, graph);
-
-    // Генерация и вывод матрицы инцидентности
     generateIncidenceMatrix(n, graph, incidence, &edgeCount);
     printIncidenceMatrix(n, edgeCount, incidence);
 
-    return 0;
-}
+    // Поиск специальных вершин по матрице смежности
+    findSpecialVerticesByAdjacencyMatrix(n, graph);
+
+    // Поиск специальных вершин по матрице инцидентности
+    findSpecialVerticesByIncidenceMatrix(n, edgeCount, incidence);
+
+    for (int i = 0; i < n; i++) {
+        free(graph[i]);
+        free(incidence[i]);
+    }
+    free(graph);
+    free(incidence);
+    return 0;}
